@@ -7,17 +7,26 @@ state = {
 }
 
 # shared/state.py
-def register_node(node_name, dependencies=None):
+def register_node(node_name, dependencies=None, priority=0):
     """
-    Dynamically register a new node with optional dependencies.
+    Dynamically register a new node with optional dependencies and priority.
     """
     if node_name not in state["nodes"]:
         state["nodes"][node_name] = {
             "status": "Not Started",
             "dependencies": dependencies or [],
             "retries": 0,
-            "output": None
+            "output": None,
+            "priority": priority
         }
+
+def get_priority(node_name):
+    """
+    Retrieve the priority of a specific node.
+    """
+    if node_name in state["nodes"]:
+        return state["
+
 
 
 # shared/state.py
