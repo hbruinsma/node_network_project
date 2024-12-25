@@ -1,14 +1,14 @@
 # main.py
 from tasks.example_task import example_task
 from tasks.progress_estimation import progress_estimation_node
-from shared.state import initialize_node, generate_task_name, add_feedback, state
+from shared.state import initialize_node, generate_task_name, state
 from shared.logging import log_event
 
 def main():
     log_event("Node network initialized")
 
     # Dynamically create and run tasks
-    task_inputs = ["Input for task 1", "FAIL", "Input for task 3"]
+    task_inputs = ["Input for task 1", "FAIL", "Long-running task"]
 
     for input_data in task_inputs:
         task_name = generate_task_name("example_task")
