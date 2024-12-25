@@ -2,11 +2,9 @@ from shared.state import (
     update_node_status,
     update_node_output,
     increment_completed_tasks,
-    get_feedback,
     are_dependencies_completed,
 )
 from shared.logging import log_node_event
-from shared.error_handling import handle_node_error
 
 def example_task(input_data, node_name):
     """
@@ -15,8 +13,7 @@ def example_task(input_data, node_name):
     try:
         # Check dependencies
         if not are_dependencies_completed(node_name):
-            log_node_event(node_name, f"Waiting for dependencies to complete...")
-            update_node_status(node_name, "Waiting for Dependencies")
+            log_node_event(node_name, "Dependencies not completed. Skipping.")
             return
 
         log_node_event(node_name, "Started execution.")
@@ -34,5 +31,5 @@ def example_task(input_data, node_name):
         log_node_event(node_name, f"Output: {output_data}")
 
     except Exception as e:
-        handle_node_error(node_name, str(e))
+        log_node_event(node_name, f"Error: {str(e)}")
         update_node_status(node_name, "Error")

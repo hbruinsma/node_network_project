@@ -1,4 +1,5 @@
 import threading
+from shared.logging import log_event
 
 def execute_in_parallel(tasks):
     """
@@ -7,6 +8,7 @@ def execute_in_parallel(tasks):
     """
     threads = []
     for task, args in tasks:
+        log_event(f"Starting parallel task: {args[1]}")  # Log task start
         thread = threading.Thread(target=task, args=args)
         threads.append(thread)
         thread.start()
@@ -14,4 +16,6 @@ def execute_in_parallel(tasks):
     # Wait for all threads to complete
     for thread in threads:
         thread.join()
+    log_event("All parallel tasks completed.")
+
 
