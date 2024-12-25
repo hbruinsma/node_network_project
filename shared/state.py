@@ -25,13 +25,15 @@ def register_node(node_name, dependencies=None, priority=0):
     Dynamically register a new node with optional dependencies and priority.
     """
     if node_name not in state["nodes"]:
+        # Explicitly handle None to avoid masking bugs
         state["nodes"][node_name] = {
             "status": "Not Started",
-            "dependencies": dependencies or [],
+            "dependencies": dependencies if dependencies is not None else [],
             "retries": 0,
             "output": None,
             "priority": priority
         }
+
 
 @thread_safe
 def get_priority(node_name):
