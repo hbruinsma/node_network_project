@@ -1,35 +1,38 @@
 # main.py
 from tasks.example_task import example_task
 from tasks.progress_estimation import progress_estimation_node
-from shared.state import initialize_node, add_feedback, state
+from shared.state import initialize_node, generate_task_name, add_feedback, state
+from shared.logging import log_event
 
 def main():
-    print("Node network initialized")
+    log_event("Node network initialized")
 
-    # Initialize tasks
-    initialize_node("example_task_1")
-    initialize_node("example_task_2")
+    # Dynamically create and run tasks
+    task_inputs = ["Input for task 1", "Input for task 2", "Input for task 3"]
 
-    # Run the first task
-    input_data_1 = "Input for task 1"
-    example_task(input_data_1)
+    for input_data in task_inputs:
+        task_name = generate_task_name("example_task")
+        initialize_node(task_name)
+        log_event(f"Task initialized: {task_name}")
+        example_task(input_data)
+        log_event(f"Task completed: {task_name}")
 
-    # Add feedback for task 1 and rerun
-    add_feedback("example_task_1", "Input was too generic")
-    example_task(input_data_1)
-
-    # Run the second task
-    input_data_2 = "Input for task 2"
-    example_task(input_data_2)
+    # Add feedback for one task and rerun
+    feedback_task_name = "example_task_1"
+    add_feedback(feedback_task_name, "Needs revision for better clarity")
+    log_event(f"Feedback added to: {feedback_task_name}")
+    example_task("Revised Input for task 1")
 
     # Call the progress estimation node
+    log_event("Calling Progress Estimation Node")
     progress_estimation_node()
 
     # Display final outputs
-    print("Final Outputs:")
+    log_event("Final Outputs:")
     for node_name, details in state["nodes"].items():
         output = details.get("output", "No Output")
-        print(f"{node_name}: {output}")
+        log_event(f"{node_name}: {output}")
 
 if __name__ == "__main__":
     main()
+
