@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables
+.env
+
+# Celery schedule file
+celerybeat-schedule
+
+# Logs
+*.log
+
+# IDE-specific files
+.idea/
+.vscode/
