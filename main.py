@@ -4,9 +4,11 @@ from tasks.progress_estimation import progress_estimation_node
 from shared.state import register_node, get_priority, state
 from shared.logging import log_event
 from shared.parallel_execution import execute_in_parallel
+from shared.timer import start_timer, stop_timer
 
 def main():
     log_event("Node network initialized")
+    start_timer()  # Start the workflow timer
 
     # Dynamically register tasks with priorities
     register_node("example_task_1", priority=2)
@@ -40,6 +42,9 @@ def main():
 
     # Run the progress estimation node after all tasks
     progress_estimation_node()
+
+    # Stop the workflow timer
+    stop_timer()
 
     # Display final outputs
     log_event("Final Outputs:")
