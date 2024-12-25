@@ -68,6 +68,7 @@ def are_dependencies_completed(node_name):
     dependencies = get_dependencies(node_name)
     for dependency in dependencies:
         if state["nodes"].get(dependency, {}).get("status") != "Completed":
+            print(f"Dependency {dependency} for node {node_name} is not completed.")
             return False
     return True
 
