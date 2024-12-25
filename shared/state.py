@@ -66,11 +66,16 @@ def are_dependencies_completed(node_name):
     Check if all dependencies for a specific node are completed.
     """
     dependencies = get_dependencies(node_name)
+    if not dependencies:  # No dependencies
+        print(f"Node {node_name} has no dependencies. Ready to execute.")
+        return True
+
     for dependency in dependencies:
         status = state["nodes"].get(dependency, {}).get("status")
         if status != "Completed":
             print(f"Dependency {dependency} for node {node_name} is not completed. Current status: {status}")
             return False
+
     print(f"All dependencies for {node_name} are completed.")
     return True
 
