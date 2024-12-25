@@ -11,7 +11,7 @@ def example_task(input_data, node_name):
         if not are_dependencies_completed(node_name):
             print(f"{node_name} is waiting for dependencies to complete...")
             return  # Skip execution if dependencies are not ready
-
+            
         update_node_status(node_name, "In Progress")
         print(f"{node_name} started with input: {input_data}")
 

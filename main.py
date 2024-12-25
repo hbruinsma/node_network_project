@@ -21,6 +21,9 @@ def main():
     add_dependency(task_2, task_1)  # Task 2 depends on Task 1
     add_dependency(task_3, task_2)  # Task 3 depends on Task 2
 
+    # Run the progress estimation node initially
+    progress_estimation_node()
+
     # Define tasks for parallel execution
     tasks_to_run = [
         (example_task, ("Input for Task 1", task_1)),
@@ -30,11 +33,13 @@ def main():
     # Execute tasks in parallel
     execute_in_parallel(tasks_to_run)
 
+    # Run the progress estimation node after initial tasks
+    progress_estimation_node()
+
     # Sequentially run dependent tasks
     example_task("Input for Task 2", task_2)
 
-    # Call the progress estimation node
-    log_event("Calling Progress Estimation Node")
+    # Run the progress estimation node after all tasks
     progress_estimation_node()
 
     # Display final outputs
@@ -45,4 +50,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
