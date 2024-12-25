@@ -1,8 +1,31 @@
 # shared/state.py
+# shared/state.py
 state = {
     "progress": 0,
+    "total_tasks": 1,  # Start with 1 for now
+    "completed_tasks": 0,
     "nodes": {}
 }
+
+def update_progress():
+    """
+    Update the progress percentage based on completed tasks.
+    """
+    if state["total_tasks"] > 0:
+        state["progress"] = int((state["completed_tasks"] / state["total_tasks"]) * 100)
+
+def increment_completed_tasks():
+    """
+    Increment the count of completed tasks.
+    """
+    state["completed_tasks"] += 1
+    update_progress()
+
+def set_total_tasks(total):
+    """
+    Set the total number of tasks.
+    """
+    state["total_tasks"] = total
 
 def update_node_status(node_name, status):
     """

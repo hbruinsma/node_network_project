@@ -1,5 +1,5 @@
 # tasks/example_task.py
-from shared.state import update_node_status, get_node_status
+from shared.state import update_node_status, increment_completed_tasks
 
 def example_task(input_data):
     """
@@ -13,5 +13,7 @@ def example_task(input_data):
     output_data = f"Processed: {input_data}"
 
     update_node_status(node_name, "Completed")
+    increment_completed_tasks()  # Update progress here
     print(f"{node_name} completed. Output: {output_data}")
     return output_data
+
