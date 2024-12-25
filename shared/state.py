@@ -1,11 +1,18 @@
 # shared/state.py
-# shared/state.py
 state = {
     "progress": 0,
     "total_tasks": 1,  # Start with 1 for now
     "completed_tasks": 0,
     "nodes": {}
 }
+
+def initialize_node(node_name):
+    """
+    Add a new node to the state with 'Not Started' status.
+    """
+    state["nodes"][node_name] = "Not Started"
+    state["total_tasks"] += 1
+
 
 def update_progress():
     """
