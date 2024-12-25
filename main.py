@@ -8,20 +8,13 @@ def main():
     log_event("Node network initialized")
 
     # Dynamically create and run tasks
-    task_inputs = ["Input for task 1", "Input for task 2", "Input for task 3"]
+    task_inputs = ["Input for task 1", "FAIL", "Input for task 3"]
 
     for input_data in task_inputs:
         task_name = generate_task_name("example_task")
         initialize_node(task_name)
         log_event(f"Task initialized: {task_name}")
         example_task(input_data)
-        log_event(f"Task completed: {task_name}")
-
-    # Add feedback for one task and rerun
-    feedback_task_name = "example_task_1"
-    add_feedback(feedback_task_name, "Needs revision for better clarity")
-    log_event(f"Feedback added to: {feedback_task_name}")
-    example_task("Revised Input for task 1")
 
     # Call the progress estimation node
     log_event("Calling Progress Estimation Node")
@@ -35,4 +28,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
