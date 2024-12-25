@@ -6,6 +6,18 @@ state = {
     "nodes": {}
 }
 
+def progress_estimation_node():
+    """
+    Logs the current progress and displays the status of all nodes.
+    """
+    print("=== Progress Estimation Node ===")
+    print(f"Overall Progress: {state['progress']}%")
+    print("Node Statuses:")
+    for node, details in state["nodes"].items():
+        status = details if isinstance(details, str) else details.get("status", "Unknown")
+        print(f"  - {node}: {status}")
+    print("================================")
+
 def initialize_node(node_name):
     """
     Add a new node to the state with 'Not Started' status.
