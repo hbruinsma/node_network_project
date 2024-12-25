@@ -1,4 +1,3 @@
-# shared/parallel_execution.py
 import threading
 
 def execute_in_parallel(tasks):
@@ -13,4 +12,6 @@ def execute_in_parallel(tasks):
         thread.start()
 
     # Wait for all threads to complete
-    for thread i
+    for thread in threads:
+        thread.join()
+
