@@ -1,7 +1,6 @@
-# main.py
 from tasks.example_task import example_task
 from tasks.progress_estimation import progress_estimation_node
-from shared.state import register_node, state
+from shared.state import register_node, update_node_status, state
 from shared.logging import log_event
 from shared.parallel_execution import execute_in_parallel
 from shared.timer import start_timer, stop_timer
@@ -44,4 +43,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
