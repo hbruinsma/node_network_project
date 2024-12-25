@@ -33,5 +33,5 @@ def example_task(input_data, node_name):
         update_node_status(node_name, "Completed")
 
     except Exception as e:
-        log_node_event(node_name, f"Error: {str(e)}")
+        log_node_event(node_name, f"Error encountered: {str(e)}")
         update_node_status(node_name, "Error")

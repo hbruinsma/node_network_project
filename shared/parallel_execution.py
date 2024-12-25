@@ -16,14 +16,16 @@ def execute_in_parallel(tasks):
             thread = threading.Thread(target=task, args=args)
             threads.append(thread)
             thread.start()
+            log_event(f"Thread started for task: {node_name}")
         else:
             log_event(f"Skipping task {node_name} due to unmet dependencies.")
 
     # Wait for all threads to complete
     for thread in threads:
-        log_event("Waiting for a thread to complete.")
         thread.join()
+        log_event("A thread has completed.")
     log_event("All parallel tasks completed.")
+
 
 
 
