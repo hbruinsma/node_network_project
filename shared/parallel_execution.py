@@ -21,7 +21,9 @@ def execute_in_parallel(tasks):
 
     # Wait for all threads to complete
     for thread in threads:
+        log_event("Waiting for a thread to complete.")
         thread.join()
     log_event("All parallel tasks completed.")
+
 
 

@@ -11,9 +11,10 @@ def example_task(input_data, node_name):
     An example task with real-time logging and thread-safe state updates.
     """
     try:
-        # Check dependencies
+        log_node_event(node_name, "Checking dependencies before execution...")
         if not are_dependencies_completed(node_name):
-            log_node_event(node_name, "Dependencies not completed. Skipping.")
+            log_node_event(node_name, "Dependencies not completed. Skipping task.")
+            update_node_status(node_name, "Waiting for Dependencies")
             return
 
         log_node_event(node_name, "Started execution.")
@@ -29,6 +30,7 @@ def example_task(input_data, node_name):
 
         log_node_event(node_name, "Execution completed successfully.")
         log_node_event(node_name, f"Output: {output_data}")
+        update_node_status(node_name, "Completed")
 
     except Exception as e:
         log_node_event(node_name, f"Error: {str(e)}")

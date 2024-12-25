@@ -67,10 +67,13 @@ def are_dependencies_completed(node_name):
     """
     dependencies = get_dependencies(node_name)
     for dependency in dependencies:
-        if state["nodes"].get(dependency, {}).get("status") != "Completed":
-            print(f"Dependency {dependency} for node {node_name} is not completed.")
+        status = state["nodes"].get(dependency, {}).get("status")
+        if status != "Completed":
+            print(f"Dependency {dependency} for node {node_name} is not completed. Current status: {status}")
             return False
+    print(f"All dependencies for {node_name} are completed.")
     return True
+
 
 @thread_safe
 def increment_retry_count(node_name):
