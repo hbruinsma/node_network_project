@@ -6,6 +6,21 @@ state = {
     "nodes": {}
 }
 
+def add_feedback(node_name, feedback):
+    """
+    Add feedback for a node to trigger revisions.
+    """
+    if node_name in state["nodes"]:
+        state["nodes"][node_name]["feedback"] = feedback
+
+def get_feedback(node_name):
+    """
+    Retrieve feedback for a specific node.
+    """
+    if node_name in state["nodes"]:
+        return state["nodes"][node_name].get("feedback", None)
+    return None
+
 def progress_estimation_node():
     """
     Logs the current progress and displays the status of all nodes.

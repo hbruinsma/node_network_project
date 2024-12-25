@@ -1,7 +1,7 @@
 # main.py
 from tasks.example_task import example_task
 from tasks.progress_estimation import progress_estimation_node
-from shared.state import initialize_node, get_progress, state
+from shared.state import initialize_node, add_feedback, state
 
 def main():
     print("Node network initialized")
@@ -14,6 +14,10 @@ def main():
     input_data_1 = "Input for task 1"
     example_task(input_data_1)
 
+    # Add feedback for task 1 and rerun
+    add_feedback("example_task_1", "Input was too generic")
+    example_task(input_data_1)
+
     # Run the second task
     input_data_2 = "Input for task 2"
     example_task(input_data_2)
@@ -21,11 +25,11 @@ def main():
     # Call the progress estimation node
     progress_estimation_node()
 
-    # Display final progress and outputs
-    progress = get_progress()
-    print(f"Final Progress: {progress}%")
-    print(f"Task 1 Output: {state['nodes']['example_task_1']['output']}")
-    print(f"Task 2 Output: {state['nodes']['example_task_2']['output']}")
+    # Display final outputs
+    print("Final Outputs:")
+    for node_name, details in state["nodes"].items():
+        output = details.get("output", "No Output")
+        print(f"{node_name}: {output}")
 
 if __name__ == "__main__":
     main()
