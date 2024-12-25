@@ -1,17 +1,15 @@
-from shared.state import are_dependencies_completed
-from shared.logging import log_event
 import threading
+from shared.logging import log_event
 
 def execute_in_parallel(tasks):
     """
     Execute a list of tasks in parallel using threads.
-    Only execute tasks whose dependencies are completed.
     """
     threads = []
 
-    # Filter tasks based on dependencies
     for task, args in tasks:
         node_name = args[1]
+        log_event(f"Checking dependencies for task: {node_name}")
         if are_dependencies_completed(node_name):
             log_event(f"Starting parallel task: {node_name}")
             thread = threading.Thread(target=task, args=args)
@@ -24,3 +22,4 @@ def execute_in_parallel(tasks):
     for thread in threads:
         thread.join()
     log_event("All parallel tasks completed.")
+
