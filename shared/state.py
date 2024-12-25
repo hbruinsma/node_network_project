@@ -7,6 +7,34 @@ state = {
 }
 
 # shared/state.py
+def add_dependency(node_name, dependency):
+    """
+    Add a dependency for a specific node.
+    """
+    if node_name not in state["nodes"]:
+        initialize_node(node_name)
+    state["nodes"][node_name]["dependencies"] = state["nodes"][node_name].get("dependencies", []) + [dependency]
+
+def get_dependencies(node_name):
+    """
+    Retrieve the dependencies for a specific node.
+    """
+    if node_name in state["nodes"]:
+        return state["nodes"][node_name].get("dependencies", [])
+    return []
+
+def are_dependencies_completed(node_name):
+    """
+    Check if all dependencies for a specific node are completed.
+    """
+    dependencies = get_dependencies(node_name)
+    for dependency in dependencies:
+        if state["nodes"].get(dependency, {}).get("status") != "Completed":
+            return False
+    return True
+
+
+# shared/state.py
 def increment_retry_count(node_name):
     """
     Increment the retry count for a specific node.
