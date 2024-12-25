@@ -7,6 +7,20 @@ state = {
 }
 
 # shared/state.py
+def register_node(node_name, dependencies=None):
+    """
+    Dynamically register a new node with optional dependencies.
+    """
+    if node_name not in state["nodes"]:
+        state["nodes"][node_name] = {
+            "status": "Not Started",
+            "dependencies": dependencies or [],
+            "retries": 0,
+            "output": None
+        }
+
+
+# shared/state.py
 def add_dependency(node_name, dependency):
     """
     Add a dependency for a specific node.

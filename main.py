@@ -1,33 +1,25 @@
 # main.py
 from tasks.example_task import example_task
 from tasks.progress_estimation import progress_estimation_node
-from shared.state import initialize_node, add_dependency, generate_task_name, state
+from shared.state import register_node, state
 from shared.logging import log_event
 from shared.parallel_execution import execute_in_parallel
 
 def main():
     log_event("Node network initialized")
 
-    # Initialize tasks
-    task_1 = generate_task_name("example_task")
-    task_2 = generate_task_name("example_task")
-    task_3 = generate_task_name("example_task")
-
-    initialize_node(task_1)
-    initialize_node(task_2)
-    initialize_node(task_3)
-
-    # Set dependencies
-    add_dependency(task_2, task_1)  # Task 2 depends on Task 1
-    add_dependency(task_3, task_2)  # Task 3 depends on Task 2
+    # Dynamically register tasks
+    register_node("example_task_1")
+    register_node("example_task_2", dependencies=["example_task_1"])
+    register_node("example_task_3", dependencies=["example_task_2"])
 
     # Run the progress estimation node initially
     progress_estimation_node()
 
     # Define tasks for parallel execution
     tasks_to_run = [
-        (example_task, ("Input for Task 1", task_1)),
-        (example_task, ("Input for Task 3", task_3)),  # This will wait for dependencies
+        (example_task, ("Input for Task 1", "example_task_1")),
+        (example_task, ("Input for Task 3", "example_task_3")),  # This will wait for dependencies
     ]
 
     # Execute tasks in parallel
@@ -37,7 +29,7 @@ def main():
     progress_estimation_node()
 
     # Sequentially run dependent tasks
-    example_task("Input for Task 2", task_2)
+    example_task("Input for Task 2", "example_task_2")
 
     # Run the progress estimation node after all tasks
     progress_estimation_node()
