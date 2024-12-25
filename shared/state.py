@@ -66,19 +66,32 @@ def are_dependencies_completed(node_name):
     Check if all dependencies for a specific node are completed.
     """
     dependencies = get_dependencies(node_name)
-    if not dependencies:  # No dependencies
-        print(f"Node {node_name} has no dependencies. Ready to execute.")
-        return True
 
-    for dependency in dependencies:
-        status = state["nodes"].get(dependency, {}).get("status")
-        if status != "Completed":
-            print(f"Dependency {dependency} for node {node_name} is not completed. Current status: {status}")
+    # Check if the node itself is already completed
+    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
+    if node_status == "Completed":
+        print(f"Node {node_name} is already completed.")
+        return False  # Avoid re-execution of completed tasks
+
+    # Handle nodes with no dependencies
+    if not dependencies:  # No dependencies
+        if node_status == "Not Started":
+            print(f"Node {node_name} has no dependencies and is ready to execute.")
+            return True
+        else:
+            print(f"Node {node_name} is not ready to execute. Current status: {node_status}")
             return False
 
-    print(f"All dependencies for {node_name} are completed.")
-    return True
+    # Handle nodes with dependencies
+    for dependency in dependencies:
+        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
+        if dep_status != "Completed":
+            print(f"Dependency {dependency} for node {node_name} is not completed. Current status: {dep_status}")
+            return False
 
+    # All dependencies are completed
+    print(f"All dependencies for node {node_name} are completed.")
+    return True
 
 @thread_safe
 def increment_retry_count(node_name):
