@@ -13,6 +13,12 @@ def initialize_node(node_name):
     state["nodes"][node_name] = "Not Started"
     state["total_tasks"] += 1
 
+def update_node_output(node_name, output):
+    """
+    Store the output of a specific node in the shared state.
+    """
+    if node_name in state["nodes"]:
+        state["nodes"][node_name] = {"status": "Completed", "output": output}
 
 def update_progress():
     """
