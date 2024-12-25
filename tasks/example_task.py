@@ -1,28 +1,31 @@
-# tasks/example_task.py
-from shared.state import update_node_status, update_node_output, increment_completed_tasks, get_dependencies, are_dependencies_completed
+ # tasks/example_task.py
+from shared.state import update_node_status, update_node_output, increment_completed_tasks, get_feedback, are_dependencies_completed
+from shared.logging import log_node_event
 from shared.error_handling import handle_node_error
 
 def example_task(input_data, node_name):
     """
-    An example task that waits for dependencies to complete.
+    An example task with real-time logging.
     """
     try:
         # Check dependencies
         if not are_dependencies_completed(node_name):
-            print(f"{node_name} is waiting for dependencies to complete...")
-            return  # Skip execution if dependencies are not ready
-            
+            log_node_event(node_name, "Waiting for dependencies to complete...")
+            return
+
+        log_node_event(node_name, "Started execution.")
         update_node_status(node_name, "In Progress")
-        print(f"{node_name} started with input: {input_data}")
 
         # Simulate task processing
+        log_node_event(node_name, f"Processing input: {input_data}")
         output_data = f"Processed: {input_data}"
 
         # Save the output and update state
         update_node_output(node_name, output_data)
         increment_completed_tasks()
-        print(f"{node_name} completed. Output: {output_data}")
-        return output_data
+        log_node_event(node_name, "Execution completed successfully.")
+        log_node_event(node_name, f"Output: {output_data}")
+        update_node_status(node_name, "Completed")
 
     except Exception as e:
         handle_node_error(node_name, str(e))
