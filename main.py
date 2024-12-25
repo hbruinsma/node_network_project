@@ -8,7 +8,7 @@ def main():
     log_event("Node network initialized")
 
     # Dynamically create and run tasks
-    task_inputs = ["Input for task 1", "FAIL", "Long-running task"]
+    task_inputs = ["Input for task 1", "FAIL", "Retry this task"]
 
     for input_data in task_inputs:
         task_name = generate_task_name("example_task")

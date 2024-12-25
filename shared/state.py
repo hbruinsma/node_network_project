@@ -6,6 +6,22 @@ state = {
     "nodes": {}
 }
 
+# shared/state.py
+def increment_retry_count(node_name):
+    """
+    Increment the retry count for a specific node.
+    """
+    if node_name in state["nodes"]:
+        state["nodes"][node_name]["retries"] = state["nodes"][node_name].get("retries", 0) + 1
+
+def get_retry_count(node_name):
+    """
+    Get the retry count for a specific node.
+    """
+    if node_name in state["nodes"]:
+        return state["nodes"][node_name].get("retries", 0)
+    return 0
+
 def add_feedback(node_name, feedback):
     """
     Add feedback for a node to trigger revisions.

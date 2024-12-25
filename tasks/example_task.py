@@ -1,12 +1,13 @@
 # tasks/example_task.py
-import time
-from shared.state import update_node_status, update_node_output, increment_completed_tasks, get_feedback
+from shared.state import update_node_status, update_node_output, increment_completed_tasks, get_feedback, increment_retry_count, get_retry_count
 from shared.error_handling import handle_node_error
 from shared.config import NODE_TIMEOUT_SECONDS
 
+MAX_RETRIES = 3  # Define the maximum number of retries
+
 def example_task(input_data):
     """
-    An example task with simulated timeout handling.
+    An example task with retry logic for failures and timeouts.
     """
     node_name = "example_task"
     try:
@@ -23,7 +24,6 @@ def example_task(input_data):
         # Simulate task processing with a potential delay
         start_time = time.time()
         while True:
-            # Simulate work
             if time.time() - start_time > NODE_TIMEOUT_SECONDS:
                 raise TimeoutError(f"{node_name} exceeded timeout of {NODE_TIMEOUT_SECONDS} seconds")
             break  # End the loop early for testing purposes
@@ -36,7 +36,11 @@ def example_task(input_data):
         print(f"{node_name} completed. Output: {output_data}")
         return output_data
 
-    except TimeoutError as e:
-        handle_node_error(node_name, str(e))
-    except Exception as e:
-        handle_node_error(node_name, str(e))
+    except (TimeoutError, Exception) as e:
+        increment_retry_count(node_name)
+        retries = get_retry_count(node_name)
+        if retries <= MAX_RETRIES:
+            print(f"{node_name} retrying ({retries}/{MAX_RETRIES})...")
+            return example_task(input_data)  # Retry the task
+        else:
+            handle_node_error(node_name, f"{str(e)} (Max retries reached)")
