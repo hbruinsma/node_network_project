@@ -20,19 +20,40 @@ def thread_safe(func):
     return wrapper
 
 @thread_safe
+def are_dependencies_completed(node_name):
+    dependencies = get_dependencies(node_name)
+    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
+
+    if node_status == "Completed":
+        print(f"Node {node_name} is already completed.")
+        return False
+
+    if not dependencies:
+        print(f"Node {node_name} has no dependencies. Current status: {node_status}")
+        return node_status == "Not Started"
+
+    for dependency in dependencies:
+        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
+        print(f"Checking dependency {dependency} for {node_name}: Status: {dep_status}")
+        if dep_status != "Completed":
+            print(f"Dependency {dependency} for {node_name} is not completed.")
+            return False
+
+    print(f"All dependencies for {node_name} are completed.")
+    return True
+
+
+@thread_safe
 def register_node(node_name, dependencies=None, priority=0):
-    """
-    Dynamically register a new node with optional dependencies and priority.
-    """
     if node_name not in state["nodes"]:
-        # Explicitly handle None to avoid masking bugs
         state["nodes"][node_name] = {
             "status": "Not Started",
-            "dependencies": dependencies if dependencies is not None else [],
+            "dependencies": dependencies if dependencies else [],
             "retries": 0,
             "output": None,
-            "priority": priority
+            "priority": priority,
         }
+        print(f"Node registered: {node_name}, Priority: {priority}, Dependencies: {dependencies}")
 
 
 @thread_safe
