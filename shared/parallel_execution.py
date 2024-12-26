@@ -1,54 +1,60 @@
 import threading
-from shared.logging import log_event
+from shared.logging import log_node_event
 from shared.state import are_dependencies_completed
 
+import threading
+from shared.logging import logger, log_event, log_error, log_task_event
+
+
+from shared.logging import logger, log_task_event, log_error
+
 def execute_in_parallel(tasks, state):
+    logger.info("Starting parallel execution of tasks.")
     threads = []
 
     for task, args in tasks:
         node_name = args[1]
+        node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
 
-        # Access node details once to reduce redundant lookups
-        node_details = state["nodes"].get(node_name, {})
-        node_status = node_details.get("status", "Not Started")
-
-        # Skip completed tasks
-        if node_status == "Completed":
-            print(f"Task {node_name} already completed. Skipping.")
+        if node_status in ["Completed", "In Progress"]:
+            log_task_event(node_name, f"Task already {node_status}. Skipping.")
             continue
 
-        # Skip tasks already in progress
-        if node_status == "In Progress":
-            print(f"Task {node_name} is already in progress. Skipping.")
-            continue
-
-        # Check dependencies before starting
         if are_dependencies_completed(node_name):
-            # Mark task as "In Progress"
+            log_task_event(node_name, "Dependencies met. Starting execution.")
             state["nodes"][node_name]["status"] = "In Progress"
-
-            # Start task in a thread
             thread = threading.Thread(target=task_wrapper, args=(task, args, state))
             threads.append(thread)
             thread.start()
-            print(f"Task {node_name} started in a thread.")
         else:
-            # Mark as waiting if dependencies are not met
+            log_task_event(node_name, "Skipping due to unmet dependencies.")
             state["nodes"][node_name]["status"] = "Waiting for Dependencies"
-            print(f"Skipping task: {node_name} due to unmet dependencies.")
 
     for thread in threads:
         thread.join()
 
-    print("All parallel tasks are completed.")
+    remaining_tasks = [(task, args) for task, args in tasks if state["nodes"][args[1]]["status"] != "Completed"]
+    if remaining_tasks:
+        logger.info("Some tasks remain incomplete. Re-executing remaining tasks.")
+        execute_in_parallel(remaining_tasks, state)
+    else:
+        logger.info("All tasks have been executed successfully.")
 
-# Task wrapper to mark tasks as completed and set outputs
+
+
+
 def task_wrapper(task, args, state):
+    node_name = args[1]
     try:
-        task(*args)
-        node_name = args[1]
-        # Mark task as completed
+        logger.info(f"Task {node_name}: Starting execution.")
+        output = task(*args)  # Call the actual task function
         state["nodes"][node_name]["status"] = "Completed"
-        state["nodes"][node_name]["output"] = f"Processed: {args[0]}"  # Example output
+        state["nodes"][node_name]["output"] = output
+        logger.info(f"Task {node_name}: Execution completed successfully. Output: {output}")
     except Exception as e:
-        log_event(f"Task {args[1]} failed with error: {e}")
+        logger.error(f"Task {node_name}: Execution failed with error: {e}")
+        state["nodes"][node_name]["status"] = "Error"
+        state["nodes"][node_name]["output"] = None
+
+
+

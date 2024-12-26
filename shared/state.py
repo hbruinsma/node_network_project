@@ -1,5 +1,6 @@
 from threading import RLock
-from shared.logging import log_event
+from tqdm import tqdm
+from shared.logging import logger, log_event, log_error, log_task_event
 
 # State dictionary and lock for thread-safe access
 state = {
@@ -9,7 +10,9 @@ state = {
     "nodes": {}
 }
 
-progress_bar = None
+# Initialize the progress bar
+progress_bar = tqdm(total=state["total_tasks"], desc="Workflow Progress", unit="task")
+
 state_lock = RLock()
 
 def thread_safe(func):
@@ -17,17 +20,16 @@ def thread_safe(func):
     Decorator to make state-modifying functions thread-safe.
     """
     def wrapper(*args, **kwargs):
-        print(f"Acquiring lock for {func.__name__}")
         with state_lock:
-            print(f"Lock acquired for {func.__name__}")
-            result = func(*args, **kwargs)
-            print(f"Releasing lock for {func.__name__}")
-            return result
+            return func(*args, **kwargs)
     return wrapper
 
 
 @thread_safe
 def register_node(node_name, dependencies=None, priority=0):
+    """
+    Register a new node in the workflow state.
+    """
     if node_name not in state["nodes"]:
         state["nodes"][node_name] = {
             "status": "Not Started",
@@ -37,17 +39,8 @@ def register_node(node_name, dependencies=None, priority=0):
             "priority": priority,
         }
         state["total_tasks"] = len(state["nodes"])  # Update total tasks dynamically
-        print(f"Node registered: {node_name}, Priority: {priority}, Dependencies: {dependencies}")
+        log_event(f"Node registered: {node_name}, Priority: {priority}, Dependencies: {dependencies}")
 
-
-@thread_safe
-def get_priority(node_name):
-    """
-    Retrieve the priority of a specific node.
-    """
-    if node_name in state["nodes"]:
-        return state["nodes"][node_name].get("priority")
-    return None
 
 @thread_safe
 def add_dependency(node_name, dependency):
@@ -55,87 +48,73 @@ def add_dependency(node_name, dependency):
     Add a dependency for a specific node.
     """
     if node_name not in state["nodes"]:
-        initialize_node(node_name)
-    state["nodes"][node_name]["dependencies"] = state["nodes"][node_name].get("dependencies", []) + [dependency]
+        register_node(node_name)
+    if dependency not in state["nodes"][node_name]["dependencies"]:
+        state["nodes"][node_name]["dependencies"].append(dependency)
+        log_node_event(node_name, f"Added dependency: {dependency}")
+
 
 @thread_safe
 def are_dependencies_completed(node_name):
-    print(f"Checking if dependencies are completed for node: {node_name}")
-    try:
-        print("Before calling get_dependencies")
-        dependencies = get_dependencies(node_name)  # Trace this call
-        print(f"Dependencies for {node_name}: {dependencies}")
-    except Exception as e:
-        print(f"Exception during get_dependencies call: {e}")
-        raise
-    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
-    print(f"Node {node_name} status: {node_status}")
-
-    if node_status == "Completed":
-        print(f"Node {node_name} is already completed.")
-        return False
-
-    if not dependencies:
-        print(f"Node {node_name} has no dependencies. Ready to execute.")
-        return node_status == "Not Started"
-
+    """
+    Check if all dependencies for a specific node are completed.
+    """
+    dependencies = state["nodes"][node_name].get("dependencies", [])
     for dependency in dependencies:
-        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
-        print(f"Dependency {dependency} for {node_name} status: {dep_status}")
-        if dep_status != "Completed":
-            print(f"Dependency {dependency} for {node_name} is not completed.")
+        status = state["nodes"][dependency]["status"]
+        log_node_event(node_name, f"Checking dependency {dependency}: Status = {status}")
+        if status != "Completed":
             return False
-
-    print(f"All dependencies for {node_name} are completed.")
     return True
 
 
 @thread_safe
-def get_dependencies(node_name):
+def update_node_output(node_name, output):
     """
-    Retrieve the dependencies for a specific node.
+    Store the output of a specific node in the shared state and mark it as completed.
     """
-    print(f"State before execution in get_dependencies: {state}")
     if node_name in state["nodes"]:
-        print(f"Checking dependencies for {node_name}...")
-        node_dependencies = state["nodes"][node_name].get("dependencies", [])
-        return node_dependencies
-    print(f"Dependencies: {node_dependencies}")
-    return []
+        state["nodes"][node_name]["output"] = output
+        update_node_status(node_name, "Completed")
+        increment_completed_tasks()
+        log_node_event(node_name, f"Output updated. Task marked as completed.")
+
 
 @thread_safe
-def increment_retry_count(node_name):
+def update_node_status(node_name, status):
     """
-    Increment the retry count for a specific node.
+    Update the status of a node and recalculate progress.
     """
     if node_name in state["nodes"]:
-        state["nodes"][node_name]["retries"] += 1
+        state["nodes"][node_name]["status"] = status
+        log_node_event(node_name, f"Status updated to {status}.")
+        update_progress()
+
 
 @thread_safe
-def get_retry_count(node_name):
+def increment_completed_tasks():
     """
-    Get the retry count for a specific node.
+    Increment the count of completed tasks and update the progress bar.
     """
-    if node_name in state["nodes"]:
-        return state["nodes"][node_name].get("retries", 0)
-    return 0
+    state["completed_tasks"] += 1
+    state["progress"] = int((state["completed_tasks"] / state["total_tasks"]) * 100)
+    progress_bar.update(1)
+    log_event(f"Completed tasks: {state['completed_tasks']}/{state['total_tasks']} | Progress: {state['progress']}%")
+
 
 @thread_safe
-def add_feedback(node_name, feedback):
+def update_progress():
     """
-    Add feedback for a node to trigger revisions.
+    Update progress percentage in the state.
     """
-    if node_name in state["nodes"]:
-        state["nodes"][node_name]["feedback"] = feedback
+    state["completed_tasks"] = sum(
+        1 for node in state["nodes"].values() if node["status"] == "Completed"
+    )
+    state["progress"] = int(
+        (state["completed_tasks"] / state["total_tasks"]) * 100
+    )
+    log_event(f"Progress updated: {state['progress']}%")
 
-@thread_safe
-def get_feedback(node_name):
-    """
-    Retrieve feedback for a specific node.
-    """
-    if node_name in state["nodes"]:
-        return state["nodes"][node_name].get("feedback", None)
-    return None
 
 @thread_safe
 def initialize_node(node_name):
@@ -151,87 +130,4 @@ def initialize_node(node_name):
             "priority": 0
         }
         state["total_tasks"] += 1
-
-@thread_safe
-def update_node_output(node_name, output):
-    """
-    Store the output of a specific node in the shared state.
-    """
-    if node_name in state["nodes"]:
-        state["nodes"][node_name]["output"] = output
-        state["nodes"][node_name]["status"] = "Completed"
-        increment_completed_tasks()
-
-@thread_safe
-def update_progress():
-    """
-    Calculate and update overall workflow progress, and refresh the progress bar.
-    """
-    global progress_bar
-    total_tasks = state["total_tasks"]
-    completed_tasks = sum(1 for node in state["nodes"].values() if node.get("status") == "Completed")
-
-    # Update progress percentage
-    state["progress"] = int((completed_tasks / total_tasks) * 100)
-
-    # Update the progress bar dynamically
-    if progress_bar:
-        progress_bar.n = completed_tasks  # Set current position
-        progress_bar.refresh()
-
-@thread_safe
-def increment_completed_tasks():
-    """
-    Increment the count of completed tasks.
-    """
-    state["completed_tasks"] += 1
-    update_progress()
-
-@thread_safe
-def set_total_tasks(total):
-    """
-    Set the total number of tasks.
-    """
-    state["total_tasks"] = total
-
-@thread_safe
-def update_node_status(node_name, status):
-    """
-    Update the status of a node and recalculate progress.
-    """
-    if node_name in state["nodes"]:
-        state["nodes"][node_name]["status"] = status
-        log_event(f"Node {node_name} status updated to {status}.")
-        update_progress()  # Update progress bar
-
-@thread_safe
-def get_node_status(node_name):
-    """
-    Retrieve the status of a specific node from the shared state.
-    """
-    return state["nodes"].get(node_name, {}).get("status", "Not Started")
-
-@thread_safe
-def progress_estimation_node():
-    """
-    Logs the current progress and displays the status of all nodes.
-    """
-    print("=== Progress Estimation Node ===")
-    print(f"Overall Progress: {state['progress']}%")
-    print("Node Details:")
-    for node_name, details in state["nodes"].items():
-        print(f"  - {node_name}:")
-        print(f"      Status: {details.get('status', 'Unknown')}")
-        print(f"      Dependencies: {details.get('dependencies', [])}")
-        print(f"      Retries: {details.get('retries', 0)}")
-        print(f"      Output: {details.get('output', 'No Output')}")
-    print("================================")
-
-@thread_safe
-def get_progress():
-    """
-    Retrieve the overall progress of the workflow.
-    """
-    return state["progress"]
-
-
+        log_node_event(node_name, "Node initialized.")

@@ -1,28 +1,29 @@
-# shared/logging.py
-import datetime
+import logging
 
-# shared/logging.py
-import datetime
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
-def log_event(event):
-    """
-    Log a workflow event with a timestamp.
-    """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {event}")
+# Create a logger
+logger = logging.getLogger(__name__)
 
-def log_node_event(node_name, message):
+def log_event(message):
     """
-    Log a specific event for a given node.
+    Log a general event.
     """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] [{node_name}] {message}")
+    logger.info(message)
 
-# shared/logging.py
 def log_error(error_message):
     """
-    Log an error with a timestamp.
+    Log an error.
     """
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] ERROR: {error_message}")
- 
+    logger.error(error_message)
+
+def log_task_event(node_name, message):
+    """
+    Log a task-specific event.
+    """
+    logger.info(f"[{node_name}] {message}")
