@@ -87,7 +87,7 @@ def update_node_status(node_name, status):
     """
     if node_name in state["nodes"]:
         state["nodes"][node_name]["status"] = status
-        log_node_event(node_name, f"Status updated to {status}.")
+        log_event(node_name, f"Status updated to {status}.")
         update_progress()
 
 
@@ -101,7 +101,8 @@ def increment_completed_tasks():
     progress_bar.update(1)
     log_event(f"Completed tasks: {state['completed_tasks']}/{state['total_tasks']} | Progress: {state['progress']}%")
 
-
+#TODO finish fixing text cases (dependencies and one other I forgot)
+#Also need to understand how to create this program programatically from a gpt rather than just pasting code it gives me into this.
 @thread_safe
 def update_progress():
     """
