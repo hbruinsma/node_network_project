@@ -1,4 +1,5 @@
 from threading import RLock
+from shared.logging import log_event
 
 # State dictionary and lock for thread-safe access
 state = {
@@ -8,6 +9,7 @@ state = {
     "nodes": {}
 }
 
+progress_bar = None
 state_lock = RLock()
 
 def thread_safe(func):
@@ -162,9 +164,20 @@ def update_node_output(node_name, output):
 
 @thread_safe
 def update_progress():
-    """Update the progress percentage based on completed tasks."""
-    if state["total_tasks"] > 0:
-        state["progress"] = min(100, int((state["completed_tasks"] / state["total_tasks"]) * 100))
+    """
+    Calculate and update overall workflow progress, and refresh the progress bar.
+    """
+    global progress_bar
+    total_tasks = state["total_tasks"]
+    completed_tasks = sum(1 for node in state["nodes"].values() if node.get("status") == "Completed")
+
+    # Update progress percentage
+    state["progress"] = int((completed_tasks / total_tasks) * 100)
+
+    # Update the progress bar dynamically
+    if progress_bar:
+        progress_bar.n = completed_tasks  # Set current position
+        progress_bar.refresh()
 
 @thread_safe
 def increment_completed_tasks():
@@ -184,10 +197,12 @@ def set_total_tasks(total):
 @thread_safe
 def update_node_status(node_name, status):
     """
-    Update the status of a specific node in the shared state.
+    Update the status of a node and recalculate progress.
     """
     if node_name in state["nodes"]:
         state["nodes"][node_name]["status"] = status
+        log_event(f"Node {node_name} status updated to {status}.")
+        update_progress()  # Update progress bar
 
 @thread_safe
 def get_node_status(node_name):

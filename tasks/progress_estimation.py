@@ -1,22 +1,46 @@
 # tasks/progress_estimation.py
 from shared.state import state
+from tqdm import tqdm
+
+# Global progress bar
+progress_bar = None
+
+def initialize_progress_bar():
+    """
+    Initialize the progress bar based on the total number of tasks.
+    """
+    global progress_bar
+    total_tasks = state["total_tasks"]
+    progress_bar = tqdm(total=total_tasks, desc="Workflow Progress", unit="task")
+
+def update_progress_bar():
+    """
+    Update the progress bar based on the number of completed tasks.
+    """
+    global progress_bar
+    if progress_bar:
+        completed_tasks = sum(1 for node in state["nodes"].values() if node.get("status") == "Completed")
+        progress_bar.n = completed_tasks  # Update progress bar position
+        progress_bar.refresh()
+
+def finalize_progress_bar():
+    """
+    Finalize and close the progress bar when the workflow is complete.
+    """
+    global progress_bar
+    if progress_bar:
+        progress_bar.close()
 
 def progress_estimation_node():
     """
-    Logs detailed progress information, including node statuses,
-    dependencies, retries, and overall progress.
+    Display a simplified progress report with overall progress and task statuses.
     """
-    print("=== Progress Estimation Node ===")
+    print("\n=== Progress Estimation ===")
     print(f"Overall Progress: {state['progress']}%")
-    print("Node Details:")
     for node_name, details in state["nodes"].items():
         status = details.get("status", "Unknown")
-        dependencies = details.get("dependencies", [])
-        retries = details.get("retries", 0)
-        output = details.get("output", "No Output")
-        print(f"  - {node_name}:")
-        print(f"      Status: {status}")
-        print(f"      Dependencies: {dependencies}")
-        print(f"      Retries: {retries}")
-        print(f"      Output: {output}")
+        print(f"  - {node_name}: {status}")
     print("================================")
+
+    # Update the progress bar after logging
+    update_progress_bar()
