@@ -1,4 +1,4 @@
-from threading import Lock
+from threading import RLock
 
 # State dictionary and lock for thread-safe access
 state = {
@@ -8,39 +8,20 @@ state = {
     "nodes": {}
 }
 
-state_lock = Lock()
+state_lock = RLock()
 
 def thread_safe(func):
     """
     Decorator to make state-modifying functions thread-safe.
     """
     def wrapper(*args, **kwargs):
+        print(f"Acquiring lock for {func.__name__}")
         with state_lock:
-            return func(*args, **kwargs)
+            print(f"Lock acquired for {func.__name__}")
+            result = func(*args, **kwargs)
+            print(f"Releasing lock for {func.__name__}")
+            return result
     return wrapper
-
-@thread_safe
-def are_dependencies_completed(node_name):
-    dependencies = get_dependencies(node_name)
-    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
-
-    if node_status == "Completed":
-        print(f"Node {node_name} is already completed.")
-        return False
-
-    if not dependencies:
-        print(f"Node {node_name} has no dependencies. Current status: {node_status}")
-        return node_status == "Not Started"
-
-    for dependency in dependencies:
-        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
-        print(f"Checking dependency {dependency} for {node_name}: Status: {dep_status}")
-        if dep_status != "Completed":
-            print(f"Dependency {dependency} for {node_name} is not completed.")
-            return False
-
-    print(f"All dependencies for {node_name} are completed.")
-    return True
 
 
 @thread_safe
@@ -53,6 +34,7 @@ def register_node(node_name, dependencies=None, priority=0):
             "output": None,
             "priority": priority,
         }
+        state["total_tasks"] = len(state["nodes"])  # Update total tasks dynamically
         print(f"Node registered: {node_name}, Priority: {priority}, Dependencies: {dependencies}")
 
 
@@ -75,46 +57,49 @@ def add_dependency(node_name, dependency):
     state["nodes"][node_name]["dependencies"] = state["nodes"][node_name].get("dependencies", []) + [dependency]
 
 @thread_safe
+def are_dependencies_completed(node_name):
+    print(f"Checking if dependencies are completed for node: {node_name}")
+    try:
+        print("Before calling get_dependencies")
+        dependencies = get_dependencies(node_name)  # Trace this call
+        print(f"Dependencies for {node_name}: {dependencies}")
+    except Exception as e:
+        print(f"Exception during get_dependencies call: {e}")
+        raise
+    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
+    print(f"Node {node_name} status: {node_status}")
+
+    if node_status == "Completed":
+        print(f"Node {node_name} is already completed.")
+        return False
+
+    if not dependencies:
+        print(f"Node {node_name} has no dependencies. Ready to execute.")
+        return node_status == "Not Started"
+
+    for dependency in dependencies:
+        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
+        print(f"Dependency {dependency} for {node_name} status: {dep_status}")
+        if dep_status != "Completed":
+            print(f"Dependency {dependency} for {node_name} is not completed.")
+            return False
+
+    print(f"All dependencies for {node_name} are completed.")
+    return True
+
+
+@thread_safe
 def get_dependencies(node_name):
     """
     Retrieve the dependencies for a specific node.
     """
+    print(f"State before execution in get_dependencies: {state}")
     if node_name in state["nodes"]:
-        return state["nodes"][node_name].get("dependencies", [])
+        print(f"Checking dependencies for {node_name}...")
+        node_dependencies = state["nodes"][node_name].get("dependencies", [])
+        return node_dependencies
+    print(f"Dependencies: {node_dependencies}")
     return []
-
-@thread_safe
-def are_dependencies_completed(node_name):
-    """
-    Check if all dependencies for a specific node are completed.
-    """
-    dependencies = get_dependencies(node_name)
-
-    # Check if the node itself is already completed
-    node_status = state["nodes"].get(node_name, {}).get("status", "Not Started")
-    if node_status == "Completed":
-        print(f"Node {node_name} is already completed.")
-        return False  # Avoid re-execution of completed tasks
-
-    # Handle nodes with no dependencies
-    if not dependencies:  # No dependencies
-        if node_status == "Not Started":
-            print(f"Node {node_name} has no dependencies and is ready to execute.")
-            return True
-        else:
-            print(f"Node {node_name} is not ready to execute. Current status: {node_status}")
-            return False
-
-    # Handle nodes with dependencies
-    for dependency in dependencies:
-        dep_status = state["nodes"].get(dependency, {}).get("status", "Not Started")
-        if dep_status != "Completed":
-            print(f"Dependency {dependency} for node {node_name} is not completed. Current status: {dep_status}")
-            return False
-
-    # All dependencies are completed
-    print(f"All dependencies for node {node_name} are completed.")
-    return True
 
 @thread_safe
 def increment_retry_count(node_name):
@@ -177,11 +162,9 @@ def update_node_output(node_name, output):
 
 @thread_safe
 def update_progress():
-    """
-    Update the progress percentage based on completed tasks.
-    """
+    """Update the progress percentage based on completed tasks."""
     if state["total_tasks"] > 0:
-        state["progress"] = int((state["completed_tasks"] / state["total_tasks"]) * 100)
+        state["progress"] = min(100, int((state["completed_tasks"] / state["total_tasks"]) * 100))
 
 @thread_safe
 def increment_completed_tasks():

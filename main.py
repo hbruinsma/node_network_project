@@ -8,6 +8,7 @@ from shared.timer import start_timer, stop_timer
 def main():
     log_event("Node network initialized")
     start_timer()  # Start the workflow timer
+    #hello
 
     # Dynamically register tasks
     register_node("example_task_1", priority=2)
@@ -24,7 +25,7 @@ def main():
     ]
 
     log_event("Executing parallel tasks...")
-    execute_in_parallel(tasks_to_run)
+    execute_in_parallel(tasks_to_run, state)
 
     log_event("Executing sequential tasks...")
     example_task("Input for Task 2", "example_task_2")
@@ -52,7 +53,7 @@ def main():
     ]
 
     # Execute tasks in parallel
-    execute_in_parallel(tasks_to_run)
+    execute_in_parallel(tasks_to_run, state)
 
     # Sequentially run dependent tasks
     example_task("Input for Task 2", "example_task_2")
